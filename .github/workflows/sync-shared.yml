@@ -1,0 +1,66 @@
+name: Sync shared code and indexes from public-data-portal-mcp
+
+# 이 저장소는 public-data-portal-mcp에서 2026-10-08 분리됐다. 아래 파일은 두 서버가 함께 쓰는 것이라
+# **원본은 public-data-portal-mcp 하나**로 두고, 여기서는 매일 받아 바뀐 경우에만 커밋한다.
+#   - lib/pdp_client.js, lib/bizno_resolver.js : 공공데이터포털 호출 공통부·사업자번호 해석기(코드)
+#   - data/corp_name_index.json.gz, data/kiscon_bizno_index.json.gz : 해석기가 읽는 색인
+#     (원본 갱신: corp_name_index 매주 월 03:00 KST, kiscon_bizno_index 매월 2일 05:00 KST)
+# 공통 코드는 이 저장소에서 직접 고치지 말 것 — 다음 동기화 때 원본으로 덮인다.
+# 받은 코드로 서버가 실제로 올라오는지(import·buildServer) 먼저 확인하고, 실패하면 커밋하지 않고
+# 워크플로가 실패한다(GitHub이 실패 알림을 보낸다). 외부 API 키는 필요 없다(공개 raw 파일).
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    # 매일 06:00 KST (= 전날 21:00 UTC)
+    - cron: "0 21 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Download shared files
+        run: |
+          set -e
+          BASE="https://raw.githubusercontent.com/Sejin-Koo/public-data-portal-mcp/main"
+          for f in data/corp_name_index.json.gz data/kiscon_bizno_index.json.gz; do
+            curl -fsSL --retry 3 -o "/tmp/$(basename $f)" "$BASE/$f"
+            # 정상 gzip인지 확인한 뒤에만 교체한다(잘린 파일로 덮어쓰지 않도록)
+            gzip -t "/tmp/$(basename $f)"
+            cp "/tmp/$(basename $f)" "$f"
+          done
+          for f in lib/pdp_client.js lib/bizno_resolver.js; do
+            curl -fsSL --retry 3 -o "/tmp/$(basename $f)" "$BASE/$f"
+            # 빈 파일·HTML 오류 페이지로 덮어쓰지 않도록 최소 확인
+            node --check "/tmp/$(basename $f)"
+            cp "/tmp/$(basename $f)" "$f"
+          done
+
+      - name: Verify server still loads
+        run: |
+          set -e
+          npm install --no-audit --no-fund --loglevel=error
+          node -e 'import("./lib/server.js").then((m) => { m.buildServer(); console.log("buildServer OK"); })'
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- data/ lib/; then
+            echo "변경 없음 — 커밋 생략"
+          else
+            git add data/corp_name_index.json.gz data/kiscon_bizno_index.json.gz lib/pdp_client.js lib/bizno_resolver.js
+            git commit -m "chore: 공통 코드·사업자번호 색인 동기화 ($(date -u +%Y-%m-%d))"
+            git push
+          fi

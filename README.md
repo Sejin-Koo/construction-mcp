@@ -32,9 +32,9 @@
 | 파일 | 갱신 |
 |---|---|
 | `data/housing_permits.json.gz` | 이 저장소 `refresh-housing-permits.yml` — 매월 마지막 일요일 |
-| `data/corp_name_index.json.gz`, `data/kiscon_bizno_index.json.gz` | 원본은 `public-data-portal-mcp`의 Actions가 갱신하고, 이 저장소 `sync-indexes.yml`이 매주 월요일 받아 옴 |
+| `data/corp_name_index.json.gz`, `data/kiscon_bizno_index.json.gz` | 원본은 `public-data-portal-mcp`의 Actions가 갱신하고, 이 저장소 `sync-shared.yml`이 매일 06:00 KST에 받아 옴 |
 
-`lib/pdp_client.js`와 `lib/bizno_resolver.js`는 `public-data-portal-mcp`의 사본입니다. 공통 로직을 고칠 때는 두 저장소를 함께 고치십시오.
+`lib/pdp_client.js`와 `lib/bizno_resolver.js`는 `public-data-portal-mcp`가 원본입니다. 워크플로 `sync-shared.yml`이 매일 06:00 KST에 원본을 받아 서버가 정상 기동하는지(`buildServer`) 확인한 뒤에만 커밋합니다. **이 저장소에서 두 파일을 직접 고치지 마십시오** — 다음 동기화 때 원본으로 덮입니다. 공통 로직은 원본 저장소에서 고치고, 급하면 이 저장소의 Actions에서 워크플로를 수동 실행(workflow_dispatch)하십시오.
 
 ## 로컬 점검
 
