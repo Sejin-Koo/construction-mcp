@@ -1,0 +1,16 @@
+{
+  "name": "construction-mcp",
+  "version": "1.0.0",
+  "description": "건설·건축 현장과 시공사 조회 MCP 서버 — 키스콘 건설업체·행정처분, 건설CALS 공사·참여업체·품질검사, 건축HUB 건축인허가, 주택인허가·청약홈 (2026-10-08 public-data-portal-mcp에서 분리)",
+  "type": "module",
+  "scripts": {
+    "test": "node smoke.mjs"
+  },
+  "keywords": ["mcp", "construction", "건설", "인허가"],
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.4.3",
+    "fast-xml-parser": "^4.5.0"
+  }
+}
