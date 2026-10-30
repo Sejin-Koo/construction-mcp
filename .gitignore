@@ -2,3 +2,10 @@ node_modules/
 .vercel
 package-lock.json
 runsmoke.sh
+# 데이터 파일은 릴리스 첨부파일에 둔다(scripts/release-data.mjs). 저장소에는 data-release.json만.
+# 사업자번호 색인 2종은 public-data-portal-mcp 릴리스를 가리킨다(sync-shared가 가리킴만 맞춤).
+data/housing_permits.json.gz
+data/corp_name_index.json.gz
+data/kiscon_bizno_index.json.gz
+.release-up-*/
+public/

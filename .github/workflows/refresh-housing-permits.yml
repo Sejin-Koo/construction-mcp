@@ -46,6 +46,10 @@ jobs:
         with:
           node-version: "24"
 
+      - name: 데이터 받기(릴리스 첨부파일)
+        if: steps.gate.outputs.run == 'true'
+        run: node scripts/release-data.mjs fetch
+
       - name: Install dependencies
         if: steps.gate.outputs.run == 'true'
         run: npm install --omit=dev --no-save adm-zip
@@ -54,17 +58,11 @@ jobs:
         if: steps.gate.outputs.run == 'true'
         run: node scripts/refresh-housing-permits.mjs
 
-      - name: Commit and push if changed
+      - name: 릴리스에 올리고 가리킴 커밋
         if: steps.gate.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- data/housing_permits.json.gz; then
-            echo "no change - skip commit"
-          else
-            YM=$(node -e "const{gunzipSync}=require('zlib'),fs=require('fs');console.log(JSON.parse(gunzipSync(fs.readFileSync('data/housing_permits.json.gz')).toString('utf-8')).기준월)")
-            CNT=$(node -e "const{gunzipSync}=require('zlib'),fs=require('fs');console.log(JSON.parse(gunzipSync(fs.readFileSync('data/housing_permits.json.gz')).toString('utf-8')).건수)")
-            git add data/housing_permits.json.gz
-            git commit -m "chore: 주택인허가 전수 스냅샷 자동 갱신 (기준월 ${YM}, ${CNT}단지)"
-            git push
-          fi
+          YM=$(node -e "const{gunzipSync}=require('zlib'),fs=require('fs');console.log(JSON.parse(gunzipSync(fs.readFileSync('data/housing_permits.json.gz')).toString('utf-8')).기준월)")
+          CNT=$(node -e "const{gunzipSync}=require('zlib'),fs=require('fs');console.log(JSON.parse(gunzipSync(fs.readFileSync('data/housing_permits.json.gz')).toString('utf-8')).건수)")
+          scripts/commit-data-release.sh "chore: 주택인허가 전수 스냅샷 자동 갱신 (기준월 ${YM}, ${CNT}단지, 릴리스 첨부)" data/housing_permits.json.gz

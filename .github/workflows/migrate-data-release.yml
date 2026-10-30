@@ -1,0 +1,39 @@
+name: Migrate data to release (one-time)
+
+# 2026-10-30: git에 커밋돼 있던 데이터 파일을 릴리스로 옮기는 1회용 작업.
+#   - 주택인허가 스냅샷은 이 저장소 릴리스 'data'에 올린다.
+#   - 사업자번호 색인 2종은 원본(public-data-portal-mcp) 릴리스를 가리키게 한다.
+# 이미 main 이력에 있는 데이터 커밋은 지우지 않는다. 끝나면 이 파일은 지워도 된다.
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+      - name: 올리기·가리킴 커밋·추적 해제
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          node scripts/release-data.mjs publish data/housing_permits.json.gz
+          node scripts/release-data.mjs link Sejin-Koo/public-data-portal-mcp data/corp_name_index.json.gz data/kiscon_bizno_index.json.gz
+          mkdir -p /tmp/verify && cp data/housing_permits.json.gz /tmp/verify/ && rm -f data/*.json.gz
+          node scripts/release-data.mjs fetch
+          cmp /tmp/verify/housing_permits.json.gz data/housing_permits.json.gz
+          gzip -t data/corp_name_index.json.gz data/kiscon_bizno_index.json.gz
+          npm install --no-audit --no-fund --loglevel=error
+          node -e 'import("./lib/server.js").then((m) => { m.buildServer(); console.log("buildServer OK"); })'
+          git rm -q --cached data/housing_permits.json.gz data/corp_name_index.json.gz data/kiscon_bizno_index.json.gz
+          git add data-release.json
+          git commit -q -m "데이터 파일을 릴리스 첨부파일로 이전 (가리킴 data-release.json, 이력은 그대로)"
+          git push -q origin HEAD:main

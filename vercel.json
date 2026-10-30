@@ -1,8 +1,12 @@
 {
-  "regions": ["icn1"],
+  "regions": [
+    "icn1"
+  ],
   "functions": {
     "api/mcp.js": {
-      "maxDuration": 60
+      "maxDuration": 60,
+      "includeFiles": "data/**"
     }
-  }
+  },
+  "buildCommand": "node scripts/release-data.mjs fetch"
 }
