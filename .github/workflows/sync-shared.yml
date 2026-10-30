@@ -3,7 +3,8 @@ name: Sync shared code and indexes from public-data-portal-mcp
 # 이 저장소는 public-data-portal-mcp에서 2026-10-08 분리됐다. 아래 파일은 두 서버가 함께 쓰는 것이라
 # **원본은 public-data-portal-mcp 하나**로 두고, 여기서는 매일 받아 바뀐 경우에만 커밋한다.
 #   - lib/pdp_client.js, lib/bizno_resolver.js : 공공데이터포털 호출 공통부·사업자번호 해석기(코드)
-#   - data/corp_name_index.json.gz, data/kiscon_bizno_index.json.gz : 해석기가 읽는 색인
+#   - data/corp_name_index.json.gz, data/kiscon_bizno_index.json.gz : 해석기가 읽는 색인 — 파일이 아니라
+#     data-release.json의 가리킴만 맞춘다(원본 저장소 릴리스 첨부파일, 배포 빌드가 받아 넣는다)
 #     (원본 갱신: corp_name_index 매주 월 03:00 KST, kiscon_bizno_index 매월 2일 05:00 KST)
 # 공통 코드는 이 저장소에서 직접 고치지 말 것 — 다음 동기화 때 원본으로 덮인다.
 # 받은 코드로 서버가 실제로 올라오는지(import·buildServer) 먼저 확인하고, 실패하면 커밋하지 않고
@@ -34,18 +35,16 @@ jobs:
         run: |
           set -e
           BASE="https://raw.githubusercontent.com/Sejin-Koo/public-data-portal-mcp/main"
-          for f in data/corp_name_index.json.gz data/kiscon_bizno_index.json.gz; do
-            curl -fsSL --retry 3 -o "/tmp/$(basename $f)" "$BASE/$f"
-            # 정상 gzip인지 확인한 뒤에만 교체한다(잘린 파일로 덮어쓰지 않도록)
-            gzip -t "/tmp/$(basename $f)"
-            cp "/tmp/$(basename $f)" "$f"
-          done
-          for f in lib/pdp_client.js lib/bizno_resolver.js; do
+          # 색인 2종은 2026-10-30부터 원본 저장소의 릴리스 첨부파일에 있다. 파일을 베끼지 않고 가리킴만 맞춘다.
+          for f in lib/pdp_client.js lib/bizno_resolver.js scripts/release-data.mjs; do
             curl -fsSL --retry 3 -o "/tmp/$(basename $f)" "$BASE/$f"
             # 빈 파일·HTML 오류 페이지로 덮어쓰지 않도록 최소 확인
             node --check "/tmp/$(basename $f)"
             cp "/tmp/$(basename $f)" "$f"
           done
+          node scripts/release-data.mjs link Sejin-Koo/public-data-portal-mcp data/corp_name_index.json.gz data/kiscon_bizno_index.json.gz
+          node scripts/release-data.mjs fetch
+          gzip -t data/corp_name_index.json.gz data/kiscon_bizno_index.json.gz
 
       - name: Verify server still loads
         run: |
@@ -57,10 +56,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- data/ lib/; then
+          git add data-release.json lib/pdp_client.js lib/bizno_resolver.js scripts/release-data.mjs
+          if git diff --cached --quiet; then
             echo "변경 없음 — 커밋 생략"
           else
-            git add data/corp_name_index.json.gz data/kiscon_bizno_index.json.gz lib/pdp_client.js lib/bizno_resolver.js
-            git commit -m "chore: 공통 코드·사업자번호 색인 동기화 ($(date -u +%Y-%m-%d))"
+            git commit -m "chore: 공통 코드·사업자번호 색인 가리킴 동기화 ($(date -u +%Y-%m-%d))"
+            git pull --rebase -q origin main
             git push
           fi
