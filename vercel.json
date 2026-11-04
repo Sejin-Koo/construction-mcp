@@ -4,7 +4,7 @@
   ],
   "functions": {
     "api/mcp.js": {
-      "maxDuration": 60,
+      "maxDuration": 300,
       "includeFiles": "data/**"
     }
   },
