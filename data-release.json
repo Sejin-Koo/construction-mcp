@@ -1,5 +1,5 @@
 {"tag": "data", "note": "데이터는 릴리스 첨부파일에 있다. scripts/release-data.mjs 참조", "files": {
-  "data/corp_name_index.json.gz": {"repo":"Sejin-Koo/public-data-portal-mcp","tag":"data","asset":"corp_name_index.json.gz","sha256":"7539086410b652fbfd1cdb53d4fdc6a8e38e6817e6929d461443ed5c897079c5","size":1781458},
+  "data/corp_name_index.json.gz": {"repo":"Sejin-Koo/public-data-portal-mcp","tag":"data","asset":"corp_name_index.json.gz","sha256":"8a49d3effedbc1ca5813d4a2baaeb56011846352c1765e0a5dc686b64afcdaac","size":1782812},
   "data/housing_permits.json.gz": {"repo":"Sejin-Koo/construction-mcp","tag":"data","asset":"housing_permits.json.gz","sha256":"cabe1d0a8692265287ce7f4314fe9e93310b58b55f1063469b344836a6ed4c26","size":1564896},
   "data/kiscon_bizno_index.json.gz": {"repo":"Sejin-Koo/public-data-portal-mcp","tag":"data","asset":"kiscon_bizno_index.json.gz","sha256":"f7c80f0be41b2f7739f05c3920e724bc3f13251e7d162b106d7e307c839013e5","size":3913898}
 }}
